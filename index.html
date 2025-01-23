@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberbullying Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 400px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            font-size: 14px;
+        }
+        .header {
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .input-section, .comments-section {
+            padding: 10px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-align: center;
+            padding: 10px;
+            color: white;
+            background-color: #28a745;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        a:hover {
+            background-color: #218838;
+        }
+        .comment {
+            border-bottom: 1px solid #ddd;
+            padding: 8px 0;
+        }
+        .comment:last-child {
+            border-bottom: none;
+        }
+        .comment-text {
+            font-weight: bold;
+        }
+        .comment-prediction {
+            color: #555;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Cyberbullying Detection</div>
+        
+        <div class="input-section">
+            <textarea id="inputText" placeholder="Enter your comment..."></textarea>
+            <button onclick="detectBullying()">Submit Comment</button>
+            <div id="result" class="result"></div>
+        </div>
+
+        <div class="comments-section">
+            <h3>Comments</h3>
+            <div id="commentsList">
+                <!-- Existing comments from the database -->
+                {% for comment, prediction in comments %}
+                <div class="comment">
+                    <div class="comment-text">{{ comment }}</div>
+                    <div class="comment-prediction">Prediction: {{ prediction }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Hyperlink to the analysis page -->
+        <a href="/analysis">View Analysis</a>
+    </div>
+
+    <script>
+        async function detectBullying() {
+            const text = document.getElementById('inputText').value;
+            const resultDiv = document.getElementById('result');
+            const commentsList = document.getElementById('commentsList');
+
+            if (!text.trim()) {
+                resultDiv.textContent = "Please enter some text.";
+                return;
+            }
+
+            resultDiv.textContent = "Analyzing...";
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    resultDiv.textContent = `Prediction: ${data.result}`;
+
+                    // Add the new comment to the comments list dynamically
+                    const newComment = document.createElement('div');
+                    newComment.classList.add('comment');
+                    newComment.innerHTML = `
+                        <div class="comment-text">${text}</div>
+                        <div class="comment-prediction">Prediction: ${data.result}</div>
+                    `;
+                    commentsList.prepend(newComment);
+                } else {
+                    resultDiv.textContent = `Error: ${data.message}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = "An error occurred. Please try again.";
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
